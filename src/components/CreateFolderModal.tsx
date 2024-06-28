@@ -1,35 +1,33 @@
 import React, { useState } from "react";
-import { View, Modal, StyleSheet, TextInput } from "react-native";
+import { View,Text, Modal, StyleSheet, TextInput } from "react-native";
 import { Button } from "react-native-paper";
 
 
 interface Props {
   visible: boolean;
-
-
   onCreateFolder: (folderName: string) => void;
-  onCancel: () => void;
+  onDismiss: () => void;
 }
 
 const CreateFolderModal: React.FC<Props> = ({
   visible,
   onCreateFolder,
-  onCancel,
+  onDismiss,
 }) => {
   const [folderName, setFolderName] = useState<string>("");
 
-  const handleCreateFolder = async () => {
+  const handleCreateFolder =  () => {
     if (folderName.trim() === "") {
-     
       return;
     }
 
     onCreateFolder(folderName);
+    setFolderName("")
   };
 
   const cancelCreateFolder = () => {
     setFolderName(""); 
-    onCancel();
+    onDismiss();
   };
 
   return (
@@ -41,9 +39,10 @@ const CreateFolderModal: React.FC<Props> = ({
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>Create New Folder</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter folder name"
+            placeholder="Enter Folder Name"
             value={folderName}
             onChangeText={(text) => setFolderName(text)}
           />
@@ -74,6 +73,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: "80%",
     alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   input: {
     width: "100%",

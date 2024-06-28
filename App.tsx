@@ -1,91 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Provider as PaperProvider, Appbar, FAB, Snackbar, Button } from 'react-native-paper';
-import * as FileSystem from 'expo-file-system';
-import FileList from './src/components/FileList';
-import CreateFileModal from './src/components/CreateFileModal';
-import CreateFolderModal from './src/components/CreateFolderModal';
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet } from "react-native";
+import {
+  Provider as PaperProvider,
+  Appbar,
+  FAB,
+  Snackbar,
+  Button,
+} from "react-native-paper";
+import * as FileSystem from "expo-file-system";
+import FileList from "./src/components/FileList";
+import CreateFileModal from "./src/components/CreateFileModal";
+import CreateFolderModal from "./src/components/CreateFolderModal";
 
 const App: React.FC = () => {
   const [files, setFiles] = useState<string[]>([]);
-  const [dialogVisible, setDialogVisible] = useState<boolean>(false);
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [folderName, setFolderName] = useState<string>('');
-
+  const [fileModalVisible, setFileModalVisible] = useState<boolean>(false);
+  const [snackbarVisible, setSnackbarVisible] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+  const [FolderModalVisible, setFolderModalVisible] = useState<boolean>(false);
   useEffect(() => {
     loadFiles();
   }, []);
-
   const loadFiles = async () => {
     try {
-      const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory || '');
+      const files = await FileSystem.readDirectoryAsync(
+        FileSystem.documentDirectory || ""
+      );
       setFiles(files);
     } catch (error) {
-      handleFileError('Error loading files', error);
+      console.log("Error loading files", error);
     }
   };
 
   const handleFileError = (message: string, error: Error) => {
-    console.error(message, error);
-    setSnackbarMessage(`${message}: ${error.message}`);
+    console.log(message, error);
+    setSnackbarMessage(`${message}:${error.message}`);
     setSnackbarVisible(true);
   };
 
-  const createFile = async (fileName: string) => {
+  const handleCreateFile = async (fileName: string) => {
     const newFileName = `${fileName}.txt`;
     try {
-      await FileSystem.writeAsStringAsync(`${FileSystem.documentDirectory}${newFileName}`, 'Sample content');
+      await FileSystem.writeAsStringAsync(
+        `${FileSystem.documentDirectory}${newFileName}`,
+        "Sample content"
+      );
       setSnackbarMessage(`Created file: ${newFileName}`);
       setSnackbarVisible(true);
       loadFiles();
-    } catch (error) {
-      handleFileError('Error creating file', error);
+    } catch (error: any) {
+      handleFileError("Error creating file", error);
     }
   };
 
-  const createFolder = () => {
-    setModalVisible(true);
-  };
-
   const handleCreateFolder = async (folderName: string) => {
+    const folderPath = `${FileSystem.documentDirectory}${folderName}`;
+    const folderExists = await FileSystem.getInfoAsync(folderPath);
     try {
-      const folderPath = `${FileSystem.documentDirectory}${folderName}`;
-      const folderExists = await FileSystem.getInfoAsync(folderPath);
-      
       if (folderExists.exists && folderExists.isDirectory) {
         setSnackbarMessage(`Folder '${folderName}' already exists.`);
         setSnackbarVisible(true);
-        setModalVisible(false);
+        setFolderModalVisible(false);
         return;
       }
-      
+
       await FileSystem.makeDirectoryAsync(folderPath);
       setSnackbarMessage(`Created folder: ${folderName}`);
       setSnackbarVisible(true);
-      setModalVisible(false);
+      setFolderModalVisible(false);
       loadFiles();
-    } catch (error){
-      handleFileError('Error creating folder', error);
+    } catch (error: any) {
+      handleFileError("Error creating folder", error);
     }
   };
 
   const deleteFile = async (fileName: string) => {
     try {
-      await FileSystem.deleteAsync(`${FileSystem.documentDirectory}${fileName}`);
+      await FileSystem.deleteAsync(
+        `${FileSystem.documentDirectory}${fileName}`
+      );
       loadFiles();
       setSnackbarMessage(`Deleted file: ${fileName}`);
       setSnackbarVisible(true);
-    } catch (error) {
-      handleFileError('Error deleting file', error);
+    } catch (error: any) {
+      handleFileError("Error deleting file", error);
     }
   };
 
-  const cancelCreateFolder = () => {
-    setModalVisible(false);
-    setFolderName('');
-  };
 
   return (
     <PaperProvider>
@@ -94,19 +95,27 @@ const App: React.FC = () => {
       </Appbar.Header>
       <View style={styles.container}>
         <FileList files={files} onDeleteFile={deleteFile} />
-        <FAB style={styles.fab} icon="plus" onPress={() => setDialogVisible(true)} />
-        <CreateFileModal 
-          visible={dialogVisible} 
-          onDismiss={() => setDialogVisible(false)} 
-          onCreateFile={createFile} 
+        <FAB
+          style={styles.fab}
+          icon="plus"
+          onPress={() => setFileModalVisible(true)}
         />
-        <Button style={styles.folderButton} icon="folder-plus" mode="contained" onPress={createFolder}>
+        <CreateFileModal
+          visible={fileModalVisible}
+          onDismiss={() => setFileModalVisible(false)}
+          onCreateFile={handleCreateFile}
+        />
+        <Button
+          style={styles.folderButton}
+          mode="contained"
+          onPress={() => setFolderModalVisible(true)}
+        >
           Create Folder
         </Button>
         <CreateFolderModal
-          visible={modalVisible}
+          visible={FolderModalVisible}
           onCreateFolder={handleCreateFolder}
-          onCancel={cancelCreateFolder}
+          onDismiss={() => setFolderModalVisible(false)}
         />
         <Snackbar
           visible={snackbarVisible}
@@ -118,21 +127,21 @@ const App: React.FC = () => {
       </View>
     </PaperProvider>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: 20,
     bottom: 20,
   },
   folderButton: {
-    position: 'absolute',
+    position: "absolute",
     left: 20,
     bottom: 20,
   },
